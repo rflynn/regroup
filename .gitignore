@@ -1,4 +1,6 @@
 .*.sw[npo]
 .DS_Store
 *.pyc
+*.p[yz]~
 __pycache__
+venv/
