@@ -37,12 +37,113 @@ I want to be able to detect that these are three sets of files:
 
 ## Solution
 
+1. Define $color/$number tags and tokenize to (token, tag) tuples similar to how NLP [part-of-speech tagging](https://en.wikipedia.org/wiki/Part-of-speech_tagging) does it
+2. Group strings based on tag, or if tag is None, on the literal token
+3. For each group of >1 entry, combine tagged tokens into sets, then print the list of strings/sets
+
+Result: this gets the exact correct answer; but is fragile due to user-defined color tag and has a more complex tokenization step. The approach is simple, but the exact solution doesn't generalize well because it requires fore-knowledge of the input.
+
+```
+$ venv/bin/python dawg_tag.py
+strings:
+['EFgreen',
+ 'EFgrey',
+ 'EntireS1',
+ 'EntireS2',
+ 'J27GreenP1',
+ 'J27GreenP2',
+ 'J27RedP1',
+ 'J27RedP2',
+ 'JournalP1Black',
+ 'JournalP1Blue',
+ 'JournalP1Green',
+ 'JournalP1Red',
+ 'JournalP2Black',
+ 'JournalP2Blue',
+ 'JournalP2Green']
+tags:
+{'$color': {'Black',
+            'Blue',
+            'Green',
+            'Red'},
+ '$number': re.compile('\\d+')}
+strings tokenized and tagged:
+[[('EF', None), ('green', None)],
+ [('EF', None), ('grey', None)],
+ [('E', None), ('ntire', None), ('S', None), ('1', '$number')],
+ [('E', None), ('ntire', None), ('S', None), ('2', '$number')],
+ [('J', None), ('27', '$number'), ('Green', '$color'), ('P', None), ('1', '$number')],
+ [('J', None), ('27', '$number'), ('Green', '$color'), ('P', None), ('2', '$number')],
+ [('J', None), ('27', '$number'), ('Red', '$color'), ('P', None), ('1', '$number')],
+ [('J', None), ('27', '$number'), ('Red', '$color'), ('P', None), ('2', '$number')],
+ [('J', None), ('ournal', None), ('P', None), ('1', '$number'), ('Black', '$color')],
+ [('J', None), ('ournal', None), ('P', None), ('1', '$number'), ('Blue', '$color')],
+ [('J', None), ('ournal', None), ('P', None), ('1', '$number'), ('Green', '$color')],
+ [('J', None), ('ournal', None), ('P', None), ('1', '$number'), ('Red', '$color')],
+ [('J', None), ('ournal', None), ('P', None), ('2', '$number'), ('Black', '$color')],
+ [('J', None), ('ournal', None), ('P', None), ('2', '$number'), ('Blue', '$color')],
+ [('J', None), ('ournal', None), ('P', None), ('2', '$number'), ('Green', '$color')]]
+group lists of tokens by pattern of (tag or token):
+{('E', 'ntire', 'S', '$number'): [['E', 'ntire', 'S', '1'], ['E', 'ntire', 'S', '2']],
+ ('EF', 'green'): [['EF', 'green']],
+ ('EF', 'grey'): [['EF', 'grey']],
+ ('J', '$number', '$color', 'P', '$number'): [['J', '27', 'Green', 'P', '1'],
+                                              ['J', '27', 'Green', 'P', '2'],
+                                              ['J', '27', 'Red', 'P', '1'],
+                                              ['J', '27', 'Red', 'P', '2']],
+ ('J', 'ournal', 'P', '$number', '$color'): [['J', 'ournal', 'P', '1', 'Black'],
+                                             ['J', 'ournal', 'P', '1', 'Blue'],
+                                             ['J', 'ournal', 'P', '1', 'Green'],
+                                             ['J', 'ournal', 'P', '1', 'Red'],
+                                             ['J', 'ournal', 'P', '2', 'Black'],
+                                             ['J', 'ournal', 'P', '2', 'Blue'],
+                                             ['J', 'ournal', 'P', '2', 'Green']]}
+describe all strings whose pattern is seen 2+ times:
+EntireS[1,2]
+J27[Green,Red]P[1,2]
+JournalP[1,2][Black,Blue,Green,Red]
+```
+
+## Use a DAWG, then define linkage agglomerative-hierarchical-clustering-style 
 1. Build a [DAWG](https://en.wikipedia.org/wiki/Deterministic_acyclic_finite_state_automaton) or similar structure using the full set of input
 2. Use some metric to split subtrees of the DAWG into clusters
     a. in this case the simplest solution that gets the expected answer is prefix length=2
 3. Serialize the resulting clusters as some form of automata. I chose POSIX-ish regexes
 
+Result: this works decently well since all string groups share common prefixes. But 'JournalP1Red' causes JournalP1/JournalP2 to be split into separate groups due to differing suffixes. Though we'll need a different solution for the exact right answer, this is interesting because it generalizes fairly well.
 
+```
+$ venv/bin/python dawg_flatten.py
+DAWG:
+{'E': {'Fgre': {'en': {'': {}}, 'y': {'': {}}},
+       'ntireS': {'1': {'': {}}, '2': {'': {}}}},
+ 'J': {'27': {'GreenP': {'1': {'': {}}, '2': {'': {}}},
+              'RedP': {'1': {'': {}}, '2': {'': {}}}},
+       'ournalP': {'1': {'Bl': {'ack': {'': {}}, 'ue': {'': {}}},
+                         'Green': {'': {}},
+                         'Red': {'': {}}},
+                   '2': {'Bl': {'ack': {'': {}}, 'ue': {'': {}}},
+                         'Green': {'': {}}}}}}
+prefixlen=2 clusters:
+[('EFgre', {'en': {'': {}}, 'y': {'': {}}}),
+ ('EntireS', {'1': {'': {}}, '2': {'': {}}}),
+ ('J27',
+  {'GreenP': {'1': {'': {}}, '2': {'': {}}},
+   'RedP': {'1': {'': {}}, '2': {'': {}}}}),
+ ('JournalP',
+  {'1': {'Bl': {'ack': {'': {}}, 'ue': {'': {}}},
+         'Green': {'': {}},
+         'Red': {'': {}}},
+   '2': {'Bl': {'ack': {'': {}}, 'ue': {'': {}}}, 'Green': {'': {}}}})]
+clusters serialized as regex-style automata:
+EFgre(en|y)
+EntireS[12]
+J27(Green|Red)P[12]
+JournalP(1(Bl(ack|ue)|(Green|Red))|2(Bl(ack|ue)|Green))
+```
+
+
+## Use agglomerative clustering to group strings, then a DAWG to describe them
 1. Calculate a matrix of [distances between strings](https://en.wikipedia.org/wiki/String_metric)
     a. choose a distance metric. it can be character-oriented like Levenshtein or token-oriented like a regex or by using a dictionary
 2. Use that distance matrix to build a [hierarchical cluster](https://en.wikipedia.org/wiki/Hierarchical_clustering) tree of strings
@@ -50,4 +151,6 @@ I want to be able to detect that these are three sets of files:
     a. k-means works if you know how many groups you want to end up with. simple, but inflexible.
     b. agglomerative is more complex but adaptable
 4. Use the resulting clustered subsets to generate a [DAWG or similar structure](https://en.wikipedia.org/wiki/Deterministic_acyclic_finite_state_automaton), describing the strings they contain in an efficient manner
+
+Result: levenshtein doesn't work well due to differences in length of key tokens. Using an alternative tokenizing scheme works better, but not well enough.
 

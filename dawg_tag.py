@@ -24,25 +24,30 @@ strings = [
 ]
 
 
+print('strings:')
+pprint(strings)
+
 # ref: https://en.wikipedia.org/wiki/Part-of-speech_tagging
 tags = {
-    '$color': set('Black Blue Gray Grey Green Gray Orange Pink Purple Red White Yellow'.split()),
+    '$color': set('Black Blue Green Red'.split()),
     '$number': re.compile('\d+'),
 }
+print('tags:')
+pprint(tags, width=1)
 
 tok = TaggingTokenizer(tags)
 tagged = [TaggedString(s, tokenizer=tok) for s in strings]
 print('strings tokenized and tagged:')
 pprint(tagged)
 
-print('group by tag or token:')
+print('group lists of tokens by pattern of (tag or token):')
 clusters = defaultdict(list)
 for t in tagged:
     tagpattern = tuple((tag or tok) for tok, tag in t.tagged)
     toks = [tok for tok, tag in t.tagged]
     clusters[tagpattern].append(toks)
 clusters = dict(clusters)
-pprint(clusters)
+pprint(clusters, width=120)
 
 
 def group(words):
