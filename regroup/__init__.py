@@ -140,9 +140,14 @@ class DAWG:
 
     @classmethod
     def _build(cls, t):
+
+        # FIXME: for a real DAWG, we need to handle shared suffixes for strings with different prefixes
+
+        # return dict(t.trie)
         made = {}
         for k, v in t.items():
             v = cls._build(v)
+            # merge substrings
             if k and len(v) == 1 and '' not in v:
                 k2, v2 = list(v.items())[0]
                 made[k + k2] = v2
@@ -218,19 +223,19 @@ class DAWG:
 
     @classmethod
     def serialize_regex(cls, d, level=0):
-        pprint(d)
+        # pprint(d)
         if d and is_char_class(d):
             s = as_char_class(d.keys())
         elif d and all_suffixes_identical(d):
-            print('all_suffixes_identical', d)
+            # print('all_suffixes_identical', d)
             # condense suffixes from multiple keys within a subtree
             v = list(d.values())[0]
+            # print('v', v)
             if all_len1(d):
                 s = as_charclass(d.keys())
             elif is_optional_char_class(d):
                 s = as_opt_charclass(d.keys())
             elif is_optional(d):
-                print('is_optional', d)
                 s = as_optional_group(d.keys())
                 # s = re.escape(sorted(list(d.keys()))[1]) + '?'
             else:
@@ -239,12 +244,12 @@ class DAWG:
         elif is_optional_char_class(d):
             s = as_opt_charclass(d.keys())
         elif is_optional(d):
-            print('is_optional', d)
+            # print('is_optional', d)
             s = opt_group(re.escape(sorted(list(d.keys()))[1])) + '?'
             # s = as_optional_group(d.keys())
         else:
             bysuff = suffixes(d)
-            print('suffixes', bysuff)
+            # print('suffixes', bysuff)
             if len(bysuff) < len(d):
                 # at least one suffix shared
                 # print('shared suffix', bysuff)
@@ -252,10 +257,12 @@ class DAWG:
                 suffixed = [repr_keys(k, do_group=(level > 0)) +
                             cls.serialize_regex(v, level=level + 1)
                             for v, k in bysuff]
+                # print('suffixed', suffixed)
                 s = group(suffixed)
             else:
                 grouped = [k + (cls.serialize_regex(v, level=level + 1) if v else '')
                            for k, v in sorted(d.items())]
+                # print('grouped', grouped)
                 s = group(grouped)
         return s
 
@@ -300,7 +307,7 @@ def is_optional_strings(strings):
 
 def as_optional_group(strings):
     strings = list(strings)
-    print('as_optional_group:', strings)
+    # print('as_optional_group:', strings)
     assert strings[0] == ''
     j = strings[1:]
     if not j:
@@ -381,7 +388,9 @@ def as_opt_charclass(l):
 
 def as_group(l, do_group=True):
     l = sorted(l)
-    suffix = longest_suffix(l) if len(l) > 1 else 0
+    # print('as_group', l)
+    suffix = longest_suffix(l) if len(l) > 1 else ''
+    # print('suffix', suffix)
     if suffix:
         lensuff = len(suffix)
         prefixes = [x[:-lensuff] for x in l]
@@ -391,30 +400,30 @@ def as_group(l, do_group=True):
             s = group(prefixes)
         s += suffix
     else:
-        print('as_group', l)
+        # print('as_group', l)
         s = group(l, do_group=do_group)
     return s
 
 
 def repr_keys(l, do_group=True):
+    # print('repr_keys', l)
     if all_len1(l):
         return as_charclass(l)
     if all_len01(l):
         return as_opt_charclass(l)
-    print('repr_keys', l)
     return as_group(l, do_group=do_group)
 
 
 def group(strings, do_group=True):
-    print('group', strings)
+    # print('group', strings)
     if is_optional_strings(strings):
         return as_optional_group(strings)
     s = '|'.join(strings)
     if do_group and (len(strings) > 1 or ('|' in s and '(' not in s)):
-        print('group', s)
+        # print('group', s)
         s = '(' + s + ')'
-    else:
-        print('no group', strings, do_group, len(strings))
+    # else:
+    #    print('no group', strings, do_group, len(strings))
     return s
 
 
@@ -429,7 +438,7 @@ def longest_prefix(strings):
         longest = longest_prefix_2strings(prefix, strings[i], longest)
         if longest == 0:
             return ''
-    return prefix[:longest]
+    return prefix[:longest][::-1]
 
 
 def longest_prefix_2strings(x, y, longest):

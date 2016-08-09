@@ -20,7 +20,9 @@ class TestParens(unittest.TestCase):
         strings = ['aa', 'ab', 'bb']
         # dawg = DAWG.from_list(strings)
         # print(dawg)
-        self.assertEqual('[ab][ab]', match(strings))
+        # [ab][ab]
+        # (a[ab]|bb)
+        self.assertEqual('(a[ab]|bb)', match(strings))
 
     def test_parens3(self):
         strings = ['aaa', 'abb', 'c']
@@ -36,11 +38,10 @@ class TestParens(unittest.TestCase):
 
     def test_bat_brat_cat(self):
         strings = ['bat', 'brat', 'cat']
-        # (br?|c)at
-        # (br?at|cat)
-        # self.assertEqual('(br?|c)at', match(strings))
-        dawg = DAWG.from_iter(strings)
-        print(dawg)
+        # NOTE: our crappy DAWG doesn't merge suffixes for strings that don't start the same...
+        # dawg = DAWG.from_iter(strings)
+        # print(dawg)
+        #self.assertEqual('(br?|c)at', match(strings))
         self.assertEqual('(br?at|cat)', match(strings))
 
 
