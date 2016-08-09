@@ -10,8 +10,7 @@ class TestParens(unittest.TestCase):
 
     def test_empty(self):
         strings = ['', 'aa', 'bb']
-        # print('dawg', dawg)
-        self.assertEqual('(|aa|bb)', match(strings))
+        self.assertEqual('(aa|bb)?', match(strings))
 
     def test_parens(self):
         strings = ['aa', 'bb', 'c']
@@ -19,7 +18,7 @@ class TestParens(unittest.TestCase):
 
     def test_parens2(self):
         strings = ['aa', 'ab', 'bb']
-        dawg = DAWG.from_list(strings)
+        # dawg = DAWG.from_list(strings)
         # print(dawg)
         self.assertEqual('[ab][ab]', match(strings))
 
@@ -32,14 +31,17 @@ class TestParens(unittest.TestCase):
         self.assertEqual('(a(aa|bb)|cc|dd)', match(strings))
 
     def test_greenred(self):
-        strings = [
-            'Black',
-            'Blue',
-            'Green',
-            'Red',
-        ]
-        self.assertEqual('(Bl(ack|ue)|Green|Red)',
-                         match(strings))
+        strings = ['Black', 'Blue', 'Green', 'Red']
+        self.assertEqual('(Bl(ack|ue)|Green|Red)', match(strings))
+
+    def test_bat_brat_cat(self):
+        strings = ['bat', 'brat', 'cat']
+        # (br?|c)at
+        # (br?at|cat)
+        # self.assertEqual('(br?|c)at', match(strings))
+        dawg = DAWG.from_iter(strings)
+        print(dawg)
+        self.assertEqual('(br?at|cat)', match(strings))
 
 
 """
@@ -112,13 +114,13 @@ class TestDigits(unittest.TestCase):
                          match(['0', '0.1']))
 
     def test_float_variable_prefix(self):
-        self.assertEqual('0(|.12?)',
+        self.assertEqual('0(.12?)?',
                          match(['0', '0.1', '0.12']))
 
     def test_float_variable_prefix23(self):
         # 0(|.1(|23))
         # 0(.1(23)?)?
-        self.assertEqual('0(|.1(23)?)',
+        self.assertEqual('0(.1(23)?)?',
                          match(['0', '0.1', '0.123']))
 
     def test_numbers(self):

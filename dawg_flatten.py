@@ -22,7 +22,7 @@ strings = [
     'JournalP2Green',
 ]
 
-# strings = 'Alabama · Alaska · Arizona · Arkansas · California · Colorado · Connecticut · Delaware · Florida · Georgia · Hawaii · Idaho · Illinois · Indiana · Iowa · Kansas · Kentucky · Louisiana · Maine · Maryland · Massachusetts · Michigan · Minnesota · Mississippi · Missouri · Montana · Nebraska · Nevada · New Hampshire · New Jersey · New Mexico · New York · North Carolina · North Dakota · Ohio · Oklahoma · Oregon · Pennsylvania · Rhode Island · South Carolina · South Dakota · Tennessee · Texas · Utah · Vermont · Virginia · Washington · West Virginia · Wisconsin · Wyoming'.split(' · ')
+strings = 'Alabama · Alaska · Arizona · Arkansas · California · Colorado · Connecticut · Delaware · Florida · Georgia · Hawaii · Idaho · Illinois · Indiana · Iowa · Kansas · Kentucky · Louisiana · Maine · Maryland · Massachusetts · Michigan · Minnesota · Mississippi · Missouri · Montana · Nebraska · Nevada · New Hampshire · New Jersey · New Mexico · New York · North Carolina · North Dakota · Ohio · Oklahoma · Oregon · Pennsylvania · Rhode Island · South Carolina · South Dakota · Tennessee · Texas · Utah · Vermont · Virginia · Washington · West Virginia · Wisconsin · Wyoming'.split(' · ')
 
 dawg = DAWG.from_list(strings)
 clusters = dawg.cluster_by_prefixlen(2)
@@ -45,7 +45,7 @@ for prefix, suffix_tree in clusters:
     # pprint(rel)
     if rel:
         relaxed = relaxer.relax(rel[0][1])
-        pprint(relaxed)
+        # pprint(relaxed)
         print(prefix + DAWG._serialize(relaxed))
 
 # clusters actually work less well for this solution

@@ -142,6 +142,8 @@ J27(Green|Red)P[12]
 JournalP(1(Bl(ack|ue)|(Green|Red))|2(Bl(ack|ue)|Green))
 ```
 
+You know... what would be handy would be a "relax" function, which took an exact-match DAWG and figured out the smallest change necessary for the biggest simplification in the resulting pattern. In this case, JournalP1's and JournalP's suffixes differ only by "Red": (Bl(ack|ue)|Green) (Bl(ack|ue)|(Green|Red)). If we could reason about near-matches and their cost/benefit with regard to the effect on the resulting DAWG, we could identify and perform "relaxations" to simplify the DAWG. While exact-matching is great in some cases, for large datasets it is no doubt overkill with regards to what a human is looking for in terms of a summary.
+
 
 ## Use agglomerative clustering to group strings, then a DAWG to describe them
 1. Calculate a matrix of [distances between strings](https://en.wikipedia.org/wiki/String_metric)

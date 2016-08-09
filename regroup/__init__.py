@@ -16,7 +16,7 @@ def match(strings):
     '''
     convenience wrapper for generating one regex from a list of strings
     '''
-    return DAWG.from_list(strings).serialize()
+    return DAWG.from_iter(strings).serialize()
 
 
 class StringSet:
@@ -35,7 +35,6 @@ class StringSet:
         return iter(self.strings.keys())
 
 
-
 class TaggedString:
 
     def __init__(self, string, tokenizer=None):
@@ -52,6 +51,7 @@ class Trie:
     '''
     Trie
     an n-ary string character tree
+    ref: https://en.wikipedia.org/wiki/Trie
     '''
 
     def __init__(self, stringset=None, tokenizer=None):
@@ -60,8 +60,12 @@ class Trie:
         self.trie = self._build(stringset)
 
     @classmethod
-    def from_list(cls, stringlist):
-        return cls(stringset=StringSet(stringlist))
+    def from_iter(cls, strings):
+        return cls(stringset=StringSet(strings))
+
+    @classmethod
+    def from_list(cls, strings):
+        return cls.from_iter(strings)
 
     def __repr__(self):
         return pformat(self.trie)
@@ -84,8 +88,6 @@ class Trie:
             d = root
             for token in self.tokenizer.tokenize(word):
                 d = d.setdefault(token, {})
-            #for letter in word:
-            #    d = d.setdefault(letter, {})
             # NOTE: all these empty dictionaries cost memory
             # consider trading simplicity of implementation for efficiency by refactoring to None
             d[''] = {}  # denote end-of-string
@@ -97,14 +99,19 @@ class DAWG:
     '''
     Directed Acyclic Word Graph
     like a Trie, but we condense substrings and share substrings/suffixes where possible
+    ref: https://en.wikipedia.org/wiki/Deterministic_acyclic_finite_state_automaton
     '''
 
     def __init__(self, trie=None):
         self.dawg = DAWG._build(trie)
 
     @classmethod
-    def from_list(cls, stringlist):
-        return cls(trie=Trie(StringSet(stringlist)))
+    def from_iter(cls, strings):
+        return cls(trie=Trie(StringSet(strings)))
+
+    @classmethod
+    def from_list(cls, strings):
+        return cls.from_iter(strings)
 
     @classmethod
     def from_trie(cls, t):
@@ -130,7 +137,6 @@ class DAWG:
 
     def values(self):
         return self.dawg.values()
-
 
     @classmethod
     def _build(cls, t):
@@ -188,14 +194,14 @@ class DAWG:
 
     def top_weights(weights, n):
         wsorted = sorted(weights.items(),
-                        key=lambda x: x[1],
-                        reverse=True)
+                         key=lambda x: x[1],
+                         reverse=True)
         pprint(wsorted)
         top = {}
         for k, v in wsorted:
             # if there's a prefix of k in top, remove it
             remove = [t for t in top
-                        if k[0:len(t)] == t]
+                      if k[0:len(t)] == t]
             for r in remove:
                 del top[r]
             top[k] = v
@@ -212,42 +218,44 @@ class DAWG:
 
     @classmethod
     def serialize_regex(cls, d, level=0):
-        # pprint(d)
+        pprint(d)
         if d and is_char_class(d):
             s = as_char_class(d.keys())
         elif d and all_suffixes_identical(d):
-            # print('all_suffixes_identical', d)
+            print('all_suffixes_identical', d)
             # condense suffixes from multiple keys within a subtree
             v = list(d.values())[0]
             if all_len1(d):
                 s = as_charclass(d.keys())
-            elif is_optional(d):
-                # print('is_optional', d)
-                s = re.escape(sorted(list(d.keys()))[1]) + '?'
             elif is_optional_char_class(d):
                 s = as_opt_charclass(d.keys())
+            elif is_optional(d):
+                print('is_optional', d)
+                s = as_optional_group(d.keys())
+                # s = re.escape(sorted(list(d.keys()))[1]) + '?'
             else:
                 s = as_group(d.keys())
-            s += cls.serialize_regex(v, level=level+1)
-        elif is_optional(d):
-            # print('is_optional', d)
-            s = opt_group(re.escape(sorted(list(d.keys()))[1])) + '?'
+            s += cls.serialize_regex(v, level=level + 1)
         elif is_optional_char_class(d):
             s = as_opt_charclass(d.keys())
+        elif is_optional(d):
+            print('is_optional', d)
+            s = opt_group(re.escape(sorted(list(d.keys()))[1])) + '?'
+            # s = as_optional_group(d.keys())
         else:
             bysuff = suffixes(d)
-            # print('suffixes', bysuff)
+            print('suffixes', bysuff)
             if len(bysuff) < len(d):
                 # at least one suffix shared
                 # print('shared suffix', bysuff)
                 # print('level=', level)
-                suffixed = [repr_keys(k, do_group=(level > 0)) + \
-                                cls.serialize_regex(v, level=level+1)
-                                for v, k in bysuff]
+                suffixed = [repr_keys(k, do_group=(level > 0)) +
+                            cls.serialize_regex(v, level=level + 1)
+                            for v, k in bysuff]
                 s = group(suffixed)
             else:
-                grouped = [k + (cls.serialize_regex(v, level=level+1) if v else '')
-                                    for k, v in sorted(d.items())]
+                grouped = [k + (cls.serialize_regex(v, level=level + 1) if v else '')
+                           for k, v in sorted(d.items())]
                 s = group(grouped)
         return s
 
@@ -261,8 +269,8 @@ def all_values_not(d):
 
 
 def is_char_class(d):
-    return (all_len1(d.keys())
-            and all_values_not(d))
+    return (all_len1(d.keys()) and
+            all_values_not(d))
 
 
 def as_char_class(strings):
@@ -277,14 +285,31 @@ def all_suffixes_identical(d):
     return len(vals) > 1 and len(set(map(str, vals))) == 1
 
 
-
 def is_optional(d):
-    items = sorted(list(d.items()))
-    if len(items) == 2:
+    if len(d) == 2:
+        items = sorted(list(d.items()))
         # print('is_optional items', items)
         return (not items[0][0] and (
                 not items[1][1] or items[1][1] == {'': {}}))
     return False
+
+
+def is_optional_strings(strings):
+    return not all(s for s in strings)
+
+
+def as_optional_group(strings):
+    strings = list(strings)
+    print('as_optional_group:', strings)
+    assert strings[0] == ''
+    j = strings[1:]
+    if not j:
+        return ''
+    s = '|'.join(j)
+    if len(j) > 1 or s.endswith('?') or '|' in s or '(' in s:
+        s = '(' + s + ')'
+    s += '?'
+    return s
 
 
 def all_len01(l):
@@ -292,8 +317,8 @@ def all_len01(l):
 
 
 def is_optional_char_class(d):
-    return (all_len01(d.keys())
-            and all_values_not(d))
+    return (all_len01(d.keys()) and
+            all_values_not(d))
 
 
 def condense_range(chars):
@@ -330,10 +355,10 @@ def emptyish(x):
 def suffixes(d):
     # match up keys with same values
     return sorted(((k, [a for a, _ in v])
-                    for k, v in groupby(sorted(d.items(),
-                                               key=lambda x: repr(emptyish(x[0]))),
-                                        key=lambda x: emptyish(x[1]))),
-                   key=lambda x: (repr(x[1]), repr(x[0])))
+                  for k, v in groupby(sorted(d.items(),
+                                             key=lambda x: repr(emptyish(x[0]))),
+                                      key=lambda x: emptyish(x[1]))),
+                  key=lambda x: (repr(x[1]), repr(x[0])))
 
 
 def as_charclass(l):
@@ -345,10 +370,11 @@ def as_charclass(l):
 
 
 def as_opt_charclass(l):
-    # s = ''.join(sorted(l))
     s = condense_range(l)
-    if len(l) > 1:
+    if len(l) > 2:
         s = '[' + s + ']'
+    else:
+        s = re.escape(s)
     s += '?'
     return s
 
@@ -365,7 +391,7 @@ def as_group(l, do_group=True):
             s = group(prefixes)
         s += suffix
     else:
-        # print('as_group', l)
+        print('as_group', l)
         s = group(l, do_group=do_group)
     return s
 
@@ -375,17 +401,20 @@ def repr_keys(l, do_group=True):
         return as_charclass(l)
     if all_len01(l):
         return as_opt_charclass(l)
-    # print('repr_keys', l)
+    print('repr_keys', l)
     return as_group(l, do_group=do_group)
 
 
 def group(strings, do_group=True):
+    print('group', strings)
+    if is_optional_strings(strings):
+        return as_optional_group(strings)
     s = '|'.join(strings)
     if do_group and (len(strings) > 1 or ('|' in s and '(' not in s)):
-        # print('group', s)
+        print('group', s)
         s = '(' + s + ')'
-    #else:
-    #    print('no group', strings, do_group, len(strings))
+    else:
+        print('no group', strings, do_group, len(strings))
     return s
 
 
@@ -452,5 +481,3 @@ class DAWGRelaxer:
             return replace
         return {k: cls._replace(v, find, replace)
                 for k, v in dawg.items()}
-    
-
