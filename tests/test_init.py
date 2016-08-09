@@ -6,6 +6,42 @@ import unittest
 from regroup import match, DAWG
 
 
+class TestParens(unittest.TestCase):
+
+    def test_empty(self):
+        strings = ['', 'aa', 'bb']
+        # print('dawg', dawg)
+        self.assertEqual('(|aa|bb)', match(strings))
+
+    def test_parens(self):
+        strings = ['aa', 'bb', 'c']
+        self.assertEqual('(aa|bb|c)', match(strings))
+
+    def test_parens2(self):
+        strings = ['aa', 'ab', 'bb']
+        dawg = DAWG.from_list(strings)
+        # print(dawg)
+        self.assertEqual('[ab][ab]', match(strings))
+
+    def test_parens3(self):
+        strings = ['aaa', 'abb', 'c']
+        self.assertEqual('(a(aa|bb)|c)', match(strings))
+
+    def test_parens4(self):
+        strings = ['aaa', 'abb', 'cc', 'dd']
+        self.assertEqual('(a(aa|bb)|cc|dd)', match(strings))
+
+    def test_greenred(self):
+        strings = [
+            'Black',
+            'Blue',
+            'Green',
+            'Red',
+        ]
+        self.assertEqual('(Bl(ack|ue)|Green|Red)',
+                         match(strings))
+
+
 """
 class TestDAWG(unittest.TestCase):
 
@@ -97,7 +133,7 @@ class TestDigits(unittest.TestCase):
         pattern = match(vals)
         fullpat = '^({})$'.format(pattern)
         self.assertTrue(all(re.match(fullpat, v) for v in vals))
-        self.assertEqual('(0|1(|00?|[1-9])|[2-9][0-9]?)', pattern)
+        self.assertEqual('(0|1(00?|[1-9]?)|[2-9][0-9]?)', pattern)
 
     def test_hundreds(self):
         '''test that shared suffixes are combined even when first char differs...'''

@@ -2,11 +2,14 @@
 
 from collections import Counter, defaultdict
 from copy import copy
+from functools import reduce
 from itertools import groupby
 from pprint import pprint, pformat
 import re
 
-from Levenshtein import distance as levenshtein
+# relative imports
+from .tokenizer import Tokenizer, DictionaryTokenizer, Tagged, TaggingTokenizer
+from .relax import suffixes_diff, dict_merge
 
 
 def match(strings):
@@ -30,104 +33,6 @@ class StringSet:
 
     def __iter__(self):
         return iter(self.strings.keys())
-
-
-def chars(string):
-    for c in string:
-        yield c
-
-
-def tokenize_regex_case_sensitive(string):
-    for token in re.findall('[a-z]+|[A-Z]+|\d+|\s+|.', string):
-        yield token
-
-
-class Tokenizer:
-    def __init__(self):
-        pass
-    def tokenize(self, string):
-        return chars(string)
-
-
-class DictionaryTokenizer(Tokenizer):
-
-    def __init__(self, wordset=None):
-        wordset = wordset or set()
-        self.wordset = wordset
-
-    def tokenize(self, string):
-        matchstring = string
-        while matchstring:
-            nexttoken = self.nexttoken(matchstring)
-            yield string[:len(nexttoken)]
-            matchstring = matchstring[len(nexttoken):]
-            string = string[len(nexttoken):]
-
-    def nexttoken(self, substr):
-        longest = ''
-        for word in self.wordset:
-            if len(word) > len(longest) and substr.startswith(word):
-                longest = word
-        if not longest:
-            return self.fallback(substr)
-        return longest
-
-    def fallback(self, string):
-        m = re.search('^([a-z]+|[A-Z]+|\d+|\s+|.)', string)
-        if m:
-            return m.groups()[0]
-        return string[0]
-
-
-class Tagged:
-
-    def __init__(self, string, tag):
-        self.string = string
-        self.tag = tag
-
-    def __str__(self):
-        return self.string
-
-class TaggingTokenizer:
-
-    def __init__(self, tags):
-        self.tags = tags
-
-    def tokenize(self, string):
-        matchstring = string
-        while matchstring:
-            nexttoken, nexttag = self.nexttoken(matchstring)
-            yield (nexttoken, nexttag)
-            matchstring = matchstring[len(nexttoken):]
-            string = string[len(nexttoken):]
-
-    def nexttoken(self, substr):
-        longest = ('', '')
-        for tagname, tagdef in self.tags.items():
-            match = self.tagmatch(substr, tagdef)
-            if match and len(match) > len(longest[0]):
-                longest = (match, tagname)
-        if not longest[0]:
-            longest = (self.fallback(substr), None)
-        return longest
-
-    def tagmatch(self, substr, tagdef):
-        if isinstance(tagdef, (list, set)):
-            for t in tagdef:
-                if substr.startswith(t):
-                    return substr[:len(t)]
-        else:
-            m = tagdef.search(substr)
-            if m:
-                sp = m.span()
-                if sp[0] == 0:
-                    return substr[:sp[1]]
-
-    def fallback(self, string):
-        m = re.search('^([a-z]+|[A-Z]+|\d+|\s+|.)', string)
-        if m:
-            return m.groups()[0]
-        return string[0]
 
 
 
@@ -204,6 +109,12 @@ class DAWG:
     @classmethod
     def from_trie(cls, t):
         return cls(trie=t)
+
+    @classmethod
+    def from_dawg(cls, d):
+        x = cls(trie={})
+        x.dawg = d
+        return x
 
     def __repr__(self):
         return pformat(self.dawg)
@@ -316,7 +227,7 @@ class DAWG:
             elif is_optional_char_class(d):
                 s = as_opt_charclass(d.keys())
             else:
-                s = as_group(d.keys(), level=level)
+                s = as_group(d.keys())
             s += cls.serialize_regex(v, level=level+1)
         elif is_optional(d):
             # print('is_optional', d)
@@ -329,13 +240,15 @@ class DAWG:
             if len(bysuff) < len(d):
                 # at least one suffix shared
                 # print('shared suffix', bysuff)
-                suffixed = [repr_keys(k, level=level) + cls.serialize_regex(v, level=level+1)
+                # print('level=', level)
+                suffixed = [repr_keys(k, do_group=(level > 0)) + \
+                                cls.serialize_regex(v, level=level+1)
                                 for v, k in bysuff]
-                s = group(suffixed, level=level)
+                s = group(suffixed)
             else:
                 grouped = [k + (cls.serialize_regex(v, level=level+1) if v else '')
                                     for k, v in sorted(d.items())]
-                s = group(grouped, level=level)
+                s = group(grouped)
         return s
 
 
@@ -362,6 +275,7 @@ def as_char_class(strings):
 def all_suffixes_identical(d):
     vals = list(d.values())
     return len(vals) > 1 and len(set(map(str, vals))) == 1
+
 
 
 def is_optional(d):
@@ -406,12 +320,19 @@ def condense_range(chars):
     return ''.join(l)
 
 
+def emptyish(x):
+    '''collapse empty strings'''
+    if not x or x == {'': {}}:
+        return {}
+    return x
+
+
 def suffixes(d):
     # match up keys with same values
     return sorted(((k, [a for a, _ in v])
                     for k, v in groupby(sorted(d.items(),
-                                               key=lambda x: repr(x[0])),
-                                        key=lambda x: x[1])),
+                                               key=lambda x: repr(emptyish(x[0]))),
+                                        key=lambda x: emptyish(x[1]))),
                    key=lambda x: (repr(x[1]), repr(x[0])))
 
 
@@ -432,7 +353,7 @@ def as_opt_charclass(l):
     return s
 
 
-def as_group(l, level=0):
+def as_group(l, do_group=True):
     l = sorted(l)
     suffix = longest_suffix(l) if len(l) > 1 else 0
     if suffix:
@@ -441,25 +362,30 @@ def as_group(l, level=0):
         if all_len1(prefixes):
             s = as_char_class(prefixes)
         else:
-            s = group(prefixes, level=level)
+            s = group(prefixes)
         s += suffix
     else:
-        s = group(l)
+        # print('as_group', l)
+        s = group(l, do_group=do_group)
     return s
 
 
-def repr_keys(l, level=0):
+def repr_keys(l, do_group=True):
     if all_len1(l):
         return as_charclass(l)
     if all_len01(l):
         return as_opt_charclass(l)
-    return as_group(l, level=level)
+    # print('repr_keys', l)
+    return as_group(l, do_group=do_group)
 
 
-def group(strings, level=0):
+def group(strings, do_group=True):
     s = '|'.join(strings)
-    if len(strings) > 1:
+    if do_group and (len(strings) > 1 or ('|' in s and '(' not in s)):
+        # print('group', s)
         s = '(' + s + ')'
+    #else:
+    #    print('no group', strings, do_group, len(strings))
     return s
 
 
@@ -494,4 +420,37 @@ def opt_group(s):
         # print('opt_group', s)
         s = '(' + s + ')'
     return s
+
+
+class DAWGRelaxer:
+
+    def __init__(self, dawg):
+        self.dawg = dawg
+
+    def relaxable(self):
+        return DAWGRelaxer._relaxable(self.dawg.dawg)
+
+    @classmethod
+    def _relaxable(cls, d):
+        diffcnt = suffixes_diff(d)
+        if diffcnt:
+            yield (diffcnt, d)
+        for k, v in d.items():
+            if len(v) > 1:
+                yield from cls._relaxable(v)
+
+    def relax(self, d):
+        merged = reduce(dict_merge, d.values(), {})
+        d2 = {k: merged for k in d}
+        # print('merged', merged)
+        # print('d2', d2)
+        return DAWGRelaxer._replace(self.dawg.dawg, d, d2)
+
+    @classmethod
+    def _replace(cls, dawg, find, replace):
+        if dawg == find:
+            return replace
+        return {k: cls._replace(v, find, replace)
+                for k, v in dawg.items()}
+    
 

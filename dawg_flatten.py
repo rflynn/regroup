@@ -1,7 +1,7 @@
 
 from pprint import pprint
 
-from regroup import DAWG
+from regroup import DAWG, DAWGRelaxer
 
 
 strings = [
@@ -34,6 +34,19 @@ pprint(clusters)
 print('clusters serialized as regex-style automata:')
 for prefix, suffix_tree in clusters:
     print(prefix + DAWG._serialize(suffix_tree))
+
+print('relaxed serializations:')
+for prefix, suffix_tree in clusters:
+    # print(type(suffix_tree), suffix_tree)
+    dawg = DAWG.from_dawg(suffix_tree)
+    relaxer = DAWGRelaxer(dawg)
+    rel = sorted(relaxer.relaxable(),
+                 key=lambda x: (x[0], repr(x[1])))
+    # pprint(rel)
+    if rel:
+        relaxed = relaxer.relax(rel[0][1])
+        pprint(relaxed)
+        print(prefix + DAWG._serialize(relaxed))
 
 # clusters actually work less well for this solution
 '''
