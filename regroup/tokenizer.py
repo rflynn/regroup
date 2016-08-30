@@ -1,5 +1,6 @@
 # vim: set ts=4 et:
 
+from collections import defaultdict
 import re
 
 
@@ -14,8 +15,10 @@ def tokenize_regex_case_sensitive(string):
 
 
 class Tokenizer:
+
     def __init__(self):
         pass
+
     def tokenize(self, string):
         return chars(string)
 
@@ -23,8 +26,11 @@ class Tokenizer:
 class DictionaryTokenizer(Tokenizer):
 
     def __init__(self, wordset=None):
-        wordset = wordset or set()
+        wordset = set(wordset) if wordset else set()
         self.wordset = wordset
+        self.wordsetlen = defaultdict(set)
+        for w in self.wordset:
+            self.wordsetlen[len(w)].add(w)
 
     def tokenize(self, string):
         matchstring = string
@@ -36,9 +42,11 @@ class DictionaryTokenizer(Tokenizer):
 
     def nexttoken(self, substr):
         longest = ''
-        for word in self.wordset:
-            if len(word) > len(longest) and substr.startswith(word):
-                longest = word
+        for length, words in sorted(self.wordsetlen.items()):
+            for word in words:
+                if substr.startswith(word):
+                    longest = word
+                    break
         if not longest:
             return self.fallback(substr)
         return longest
@@ -58,6 +66,7 @@ class Tagged:
 
     def __str__(self):
         return self.string
+
 
 class TaggingTokenizer:
 
@@ -99,4 +108,3 @@ class TaggingTokenizer:
         if m:
             return m.groups()[0]
         return string[0]
-
