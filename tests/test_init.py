@@ -44,6 +44,9 @@ class TestParens(unittest.TestCase):
         #self.assertEqual('(br?|c)at', match(strings))
         self.assertEqual('(br?at|cat)', match(strings))
 
+    def test_tap_taps_top_tops(self):
+        strings = ['tap', 'taps', 'top', 'tops']
+        self.assertEqual('t[ao]ps?', match(strings))
 
 """
 class TestDAWG(unittest.TestCase):
