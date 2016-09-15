@@ -306,7 +306,7 @@ def is_optional_strings(strings):
 
 
 def as_optional_group(strings):
-    strings = list(strings)
+    strings = sorted(strings)
     # print('as_optional_group:', strings)
     assert strings[0] == ''
     j = strings[1:]

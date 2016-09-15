@@ -20,6 +20,13 @@ cat list-of-50-states.txt | ./dawg.py
 (A(la(bam|sk)a|r(izona|kansas))|C(alifornia|o(lorado|nnecticut))|Delaware|Florida|Georgia|Hawaii|I(daho|llinois|ndiana|owa)|K(ansas|entucky)|Louisiana|M(a(ine|ryland|ssachusetts)|i((chigan|nnesota)|ss(issipp|our)i)|ontana)|N(e((brask|vad)a|w (Hampshire|Jersey|Mexico|York))|orth (Carolin|Dakot)a)|O(hio|klahoma|regon)|Pennsylvania|Rhode Island|South (Carolin|Dakot)a|Te(nnessee|xas)|Utah|V(ermont|irginia)|W(ashington|est Virginia|isconsin|yoming))
 ```
 
+```sh
+$ cat /usr/share/dict/words | wc -c
+ 2493109
+$ ./dawg.py < /usr/share/dict/words | wc -c
+ 1278208
+```
+
 
 ## Original Motivation
 
