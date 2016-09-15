@@ -8,7 +8,22 @@ In everyday programming terms: what is the simplest regex that exactly matches a
 
 # Examples
 
-## Problem
+```py
+# serialize 1-100 as a regex
+>>> import regroup
+>>> regroup.DAWG.from_iter(map(str, range(101))).serialize()
+'(0|1(00?|[1-9]?)|[2-9][0-9]?)'
+```
+
+```sh
+cat list-of-50-states.txt | ./dawg.py
+(A(la(bam|sk)a|r(izona|kansas))|C(alifornia|o(lorado|nnecticut))|Delaware|Florida|Georgia|Hawaii|I(daho|llinois|ndiana|owa)|K(ansas|entucky)|Louisiana|M(a(ine|ryland|ssachusetts)|i((chigan|nnesota)|ss(issipp|our)i)|ontana)|N(e((brask|vad)a|w (Hampshire|Jersey|Mexico|York))|orth (Carolin|Dakot)a)|O(hio|klahoma|regon)|Pennsylvania|Rhode Island|South (Carolin|Dakot)a|Te(nnessee|xas)|Utah|V(ermont|irginia)|W(ashington|est Virginia|isconsin|yoming))
+```
+
+
+## Original Motivation
+
+ref: [How can I detect common substrings in a list of strings](http://stackoverflow.com/questions/1410822/how-can-i-detect-common-substrings-in-a-list-of-strings)
 
 Given a set of strings, for example:
 

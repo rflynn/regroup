@@ -1,4 +1,10 @@
 
+'''
+if we know what our strings will be in advance,
+we can define tags to identify substrings that belong to the same set
+such that strings with substrings in the same tags group similarly
+'''
+
 from collections import defaultdict
 from pprint import pprint
 import re
