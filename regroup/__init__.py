@@ -313,7 +313,7 @@ def as_optional_group(strings):
     if not j:
         return ''
     s = '|'.join(j)
-    if len(j) > 1 or s.endswith('?') or '|' in s or '(' in s:
+    if len(j) > 1 or len(j[0]) > 1 or s.endswith('?') or '|' in s or '(' in s:
         s = '(' + s + ')'
     s += '?'
     return s

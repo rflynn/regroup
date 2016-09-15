@@ -48,6 +48,10 @@ class TestParens(unittest.TestCase):
         strings = ['tap', 'taps', 'top', 'tops']
         self.assertEqual('t[ao]ps?', match(strings))
 
+    def test_shared_suffix_abcdef_def(self):
+        strings = ['abcdef', 'def']
+        self.assertEqual('(abc)?def', match(strings))
+
 """
 class TestDAWG(unittest.TestCase):
 
