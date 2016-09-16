@@ -5,26 +5,31 @@ Given an arbitrary set of strings, what's the simplest way to accurately summari
 
 In everyday programming terms: what is the simplest regex that exactly matches all members of a set but nothing else?
 
+My answer is `regroup.py`, a program that converts its input to a regular expression.
 
-# Examples
+
+## Examples
+
+```sh
+# convert 2 lines of stdin to a regex
+$ cat | ./regroup.py
+Mississippi
+Missouri
+Miss(issipp|our)i
+```
+
+```sh
+# convert a 2MB dictionary to a 1MB regex
+$ ./regroup.py < /usr/share/dict/words | wc -c
+ 1278208
+```
 
 ```py
+# use regroup python lib directly
 # serialize 1-100 as a regex
 >>> import regroup
 >>> regroup.DAWG.from_iter(map(str, range(101))).serialize()
 '(0|1(00?|[1-9]?)|[2-9][0-9]?)'
-```
-
-```sh
-cat list-of-50-states.txt | ./dawg.py
-(A(la(bam|sk)a|r(izona|kansas))|C(alifornia|o(lorado|nnecticut))|Delaware|Florida|Georgia|Hawaii|I(daho|llinois|ndiana|owa)|K(ansas|entucky)|Louisiana|M(a(ine|ryland|ssachusetts)|i((chigan|nnesota)|ss(issipp|our)i)|ontana)|N(e((brask|vad)a|w (Hampshire|Jersey|Mexico|York))|orth (Carolin|Dakot)a)|O(hio|klahoma|regon)|Pennsylvania|Rhode Island|South (Carolin|Dakot)a|Te(nnessee|xas)|Utah|V(ermont|irginia)|W(ashington|est Virginia|isconsin|yoming))
-```
-
-```sh
-$ cat /usr/share/dict/words | wc -c
- 2493109
-$ ./dawg.py < /usr/share/dict/words | wc -c
- 1278208
 ```
 
 
@@ -178,3 +183,12 @@ You know... what would be handy would be a "relax" function, which took an exact
 
 Result: levenshtein doesn't work well due to differences in length of key tokens. Using an alternative tokenizing scheme works better, but not well enough.
 
+
+## Interesting External Reading
+
+1. https://en.wikipedia.org/wiki/Deterministic_acyclic_finite_state_automaton
+2. https://en.wikipedia.org/wiki/Hierarchical_clustering
+3. https://en.wikipedia.org/wiki/Longest_common_subsequence_problem
+4. https://en.wikipedia.org/wiki/Regular_expression
+5. https://en.wikipedia.org/wiki/Induction_of_regular_languages
+6. http://brandonrose.org/clustering
