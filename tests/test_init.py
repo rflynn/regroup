@@ -41,7 +41,7 @@ class TestParens(unittest.TestCase):
         # NOTE: our crappy DAWG doesn't merge suffixes for strings that don't start the same...
         # dawg = DAWG.from_iter(strings)
         # print(dawg)
-        #self.assertEqual('(br?|c)at', match(strings))
+        # self.assertEqual('(br?|c)at', match(strings))
         self.assertEqual('(br?at|cat)', match(strings))
 
     def test_tap_taps_top_tops(self):

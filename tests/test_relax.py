@@ -4,7 +4,6 @@ import unittest
 from regroup import DAWG, DAWGRelaxer, suffixes_diff
 
 
-
 class TestRelaxer(unittest.TestCase):
 
     strings = [
@@ -51,9 +50,8 @@ class TestSuffixes(unittest.TestCase):
                                            'ack': {'': {}}}))
 
     def test_greenp_redp(self):
-        self.assertEqual(0,
-            suffixes_diff({'GreenP': {'2': {'': {}}, '1': {'': {}}},
-                           'RedP': {'2': {'': {}}, '1': {'': {}}}}))
+        self.assertEqual(0, suffixes_diff({'GreenP': {'2': {'': {}}, '1': {'': {}}},
+                                           'RedP': {'2': {'': {}}, '1': {'': {}}}}))
 
     def test_diff1(self):
         self.assertEqual(1, suffixes_diff({'a': {'diff1': {'': {}}},
@@ -62,4 +60,3 @@ class TestSuffixes(unittest.TestCase):
     def test_diff2(self):
         self.assertEqual(2, suffixes_diff({'a': {'diff1': {'diff2': {'': {}}}},
                                            'b': {'': {}}}))
-

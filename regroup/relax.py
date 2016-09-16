@@ -2,7 +2,6 @@
 from functools import reduce
 
 
-
 def dict_merge(a, b, path=None):
     return _dict_merge(a, b, [])
 
@@ -14,7 +13,7 @@ def _dict_merge(a, b, path=None):
             if isinstance(va, dict) and isinstance(vb, dict):
                 _dict_merge(va, vb, path + [str(key)])
             elif va == vb:
-                pass # same leaf value
+                pass  # same leaf value
             else:
                 raise Exception('Conflict at {}'.format('.'.join(path + [str(key)])))
         else:
@@ -24,7 +23,7 @@ def _dict_merge(a, b, path=None):
 
 def dict_count_recursive(d):
     return sum(1 + dict_count_recursive(v)
-                for k, v in d.items()) if d else 0
+               for k, v in d.items()) if d else 0
 
 
 def dict_diff_recursive(d1, d2):
@@ -42,5 +41,4 @@ def suffixes_diff(d):
     merged = reduce(dict_merge, dv, {})
     # print('merged', merged)
     return sum(dict_diff_recursive(x, merged)
-                for x in dv)
-
+               for x in dv)
