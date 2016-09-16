@@ -29,13 +29,7 @@ class TestRelaxer(unittest.TestCase):
         serial1 = dawg.serialize()
         self.assertEqual(serial1,
                          '(E(Fgre(en|y)|ntireS[12])|J(27(Green|Red)P[12]|ournalP(1(Bl(ack|ue)|(Green|Red))|2(Bl(ack|ue)|Green))))')
-        relaxer = DAWGRelaxer(dawg)
-        rel = sorted(relaxer.relaxable(),
-                     key=lambda x: (x[0], repr(x[1])))
-        # pprint(rel)
-        relaxed = relaxer.relax(rel[0][1])
-        # pprint(relaxed)
-        serial2 = DAWG.from_dawg(relaxed).serialize()
+        serial2 = DAWGRelaxer(dawg).relax().serialize()
         self.assertEqual(serial2,
                          '(E(Fgre(en|y)|ntireS[12])|J(27(Green|Red)P[12]|ournalP[12](Bl(ack|ue)|(Green|Red))))')
 
