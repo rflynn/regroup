@@ -204,3 +204,13 @@ class TestEFGreen(unittest.TestCase):
              'EntireS[12]',
              'J27(Green|Red)P[12]',
              'JournalP(1(Bl(ack|ue)|(Green|Red))|2(Bl(ack|ue)|Green))'])
+
+    def test_cluster_prefixlen_tooshort(self):
+        '''
+        ensure that when clustering by prefixlen, any patterns shorter than the specified length are included in the results
+        '''
+        dawg = DAWG.from_list(['abc', 'abcde'])
+        clusters = dawg.cluster_by_prefixlen(4)  # longer than len('abc')
+        cluster_strings = [prefix + DAWG._serialize(suffix_tree)
+                           for prefix, suffix_tree in clusters]
+        self.assertEqual(cluster_strings, ['abc', 'abcde'])

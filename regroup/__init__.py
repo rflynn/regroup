@@ -181,6 +181,10 @@ class DAWG:
                 # the length of the prefix we've seen meets or exceeds the prefix
                 # length, so consider everything below this as a group
                 clusters.append((path2, v))
+            elif not v:
+                # path is shorter than specified length
+                # include it
+                clusters.append((path2, {}))
             else:
                 cls._cluster_by_prefixlen(length, clusters, v, path2)
 
