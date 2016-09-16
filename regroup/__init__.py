@@ -477,7 +477,22 @@ class DAWGRelaxer:
             if len(v) > 1:
                 yield from cls._relaxable(v)
 
-    def relax(self, d):
+    def relax(self, threshold=1):
+        '''
+        merge similar DAWG subtrees that differ by <= threshold members
+        '''
+        while True:
+            rel = sorted(self.relaxable(), key=lambda x: (x[0], repr(x[1])))
+            # pprint(rel)
+            if rel and rel[0][0] <= threshold:
+                relaxme = rel[0]
+                relaxed = self.do_relax(relaxme[1])
+                self.dawg = DAWG.from_dawg(relaxed)
+            else:
+                break
+        return self.dawg
+
+    def do_relax(self, d):
         merged = reduce(dict_merge, d.values(), {})
         d2 = {k: merged for k in d}
         # print('merged', merged)

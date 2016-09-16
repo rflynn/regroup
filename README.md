@@ -15,6 +15,7 @@ My answer is `regroup.py`, a program that converts its input to a regular expres
 $ cat | ./regroup.py
 Mississippi
 Missouri
+^D
 Miss(issipp|our)i
 ```
 
@@ -63,6 +64,33 @@ I want to be able to detect that these are three sets of files:
 
 
 ## Solution
+
+```sh
+$ cat | ./regroup.py --relax --cluster-prefix-len=2
+EFgreen
+EFgrey
+EntireS1
+EntireS2
+J27RedP1
+J27GreenP1
+J27RedP2
+J27GreenP2
+JournalP1Black
+JournalP1Blue
+JournalP1Green
+JournalP1Red
+JournalP2Black
+JournalP2Blue
+JournalP2Green
+^D
+EFgre(en|y)
+EntireS[12]
+J27(Green|Red)P[12]
+JournalP[12](Bl(ack|ue)|(Green|Red))
+```
+
+
+## Approaches
 
 1. Define $color/$number tags and tokenize to (token, tag) tuples similar to how NLP [part-of-speech tagging](https://en.wikipedia.org/wiki/Part-of-speech_tagging) does it
 2. Group strings based on tag, or if tag is None, on the literal token
@@ -138,36 +166,6 @@ JournalP[1,2][Black,Blue,Green,Red]
 3. Serialize the resulting clusters as some form of automata. I chose POSIX-ish regexes
 
 Result: this works decently well since all string groups share common prefixes. But 'JournalP1Red' causes JournalP1/JournalP2 to be split into separate groups due to differing suffixes. Though we'll need a different solution for the exact right answer, this is interesting because it generalizes fairly well.
-
-```
-$ venv/bin/python dawg_flatten.py
-DAWG:
-{'E': {'Fgre': {'en': {'': {}}, 'y': {'': {}}},
-       'ntireS': {'1': {'': {}}, '2': {'': {}}}},
- 'J': {'27': {'GreenP': {'1': {'': {}}, '2': {'': {}}},
-              'RedP': {'1': {'': {}}, '2': {'': {}}}},
-       'ournalP': {'1': {'Bl': {'ack': {'': {}}, 'ue': {'': {}}},
-                         'Green': {'': {}},
-                         'Red': {'': {}}},
-                   '2': {'Bl': {'ack': {'': {}}, 'ue': {'': {}}},
-                         'Green': {'': {}}}}}}
-prefixlen=2 clusters:
-[('EFgre', {'en': {'': {}}, 'y': {'': {}}}),
- ('EntireS', {'1': {'': {}}, '2': {'': {}}}),
- ('J27',
-  {'GreenP': {'1': {'': {}}, '2': {'': {}}},
-   'RedP': {'1': {'': {}}, '2': {'': {}}}}),
- ('JournalP',
-  {'1': {'Bl': {'ack': {'': {}}, 'ue': {'': {}}},
-         'Green': {'': {}},
-         'Red': {'': {}}},
-   '2': {'Bl': {'ack': {'': {}}, 'ue': {'': {}}}, 'Green': {'': {}}}})]
-clusters serialized as regex-style automata:
-EFgre(en|y)
-EntireS[12]
-J27(Green|Red)P[12]
-JournalP(1(Bl(ack|ue)|(Green|Red))|2(Bl(ack|ue)|Green))
-```
 
 You know... what would be handy would be a "relax" function, which took an exact-match DAWG and figured out the smallest change necessary for the biggest simplification in the resulting pattern. In this case, JournalP1's and JournalP's suffixes differ only by "Red": (Bl(ack|ue)|Green) (Bl(ack|ue)|(Green|Red)). If we could reason about near-matches and their cost/benefit with regard to the effect on the resulting DAWG, we could identify and perform "relaxations" to simplify the DAWG. While exact-matching is great in some cases, for large datasets it is no doubt overkill with regards to what a human is looking for in terms of a summary.
 
