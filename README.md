@@ -7,6 +7,8 @@ In everyday programming terms: what is the simplest regex that exactly matches a
 
 My answer is `regroup.py`, a program that converts its input to a regular expression.
 
+![Travis CI Build Status](https://travis-ci.org/rflynn/regroup.png)
+
 
 ## Examples
 
