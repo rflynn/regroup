@@ -29,7 +29,7 @@ $ ./regroup.py < /usr/share/dict/words | wc -c
 
 ```py
 # use regroup python lib directly
-# serialize 1-100 as a regex
+# serialize 0-100 as a regex
 >>> import regroup
 >>> regroup.DAWG.from_iter(map(str, range(101))).serialize()
 '(0|1(00?|[1-9]?)|[2-9][0-9]?)'
@@ -68,7 +68,7 @@ I want to be able to detect that these are three sets of files:
 ## Solution
 
 ```sh
-$ cat | ./regroup.py --relax --cluster-prefix-len=2
+$ cat | ./regroup.py --cluster-prefix-len=2
 EFgreen
 EFgrey
 EntireS1
@@ -92,7 +92,18 @@ JournalP[12](Bl(ack|ue)|(Green|Red))
 ```
 
 
+## Steps
+
+| program        | tokenize            | trie | DAWG | DAWG post-processing       | serialize    |
+| -------------- | ------------------- | ---- | ---- | -------------------------- | ------------ |
+| `regroup.py`   | character           |      |      | `--relax`, `--cluster-...` | regex        |
+| `dawg_dict.py` | word boundary       |      |      |                            | regex        |
+| `dawg_tag.py`  | predefined tag      |      |      |                            | pseudo-regex |
+
+
 ## Approaches
+
+### dawg_tag.py
 
 1. Define $color/$number tags and tokenize to (token, tag) tuples similar to how NLP [part-of-speech tagging](https://en.wikipedia.org/wiki/Part-of-speech_tagging) does it
 2. Group strings based on tag, or if tag is None, on the literal token
