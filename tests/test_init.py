@@ -52,6 +52,9 @@ class TestParens(unittest.TestCase):
         strings = ['abcdef', 'def']
         self.assertEqual('(abc)?def', match(strings))
 
+    def test_optional_space(self):
+        self.assertEqual('a( b)?', match(['a', 'a b']))
+
 """
 class TestDAWG(unittest.TestCase):
 

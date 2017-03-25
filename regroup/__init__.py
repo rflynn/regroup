@@ -46,6 +46,11 @@ class TaggedString:
         return repr(self.tagged)
 
 
+def escape(s):
+    # don't escape space; why would you do that?
+    return re.escape(s).replace(r'\ ', ' ')
+
+
 class Trie:
 
     '''
@@ -241,7 +246,7 @@ class DAWG:
                 s = as_opt_charclass(d.keys())
             elif is_optional(d):
                 s = as_optional_group(d.keys())
-                # s = re.escape(sorted(list(d.keys()))[1]) + '?'
+                # s = escape(sorted(list(d.keys()))[1]) + '?'
             else:
                 s = as_group(d.keys())
             s += cls.serialize_regex(v, level=level + 1)
@@ -249,7 +254,7 @@ class DAWG:
             s = as_opt_charclass(d.keys())
         elif is_optional(d):
             # print('is_optional', d)
-            s = opt_group(re.escape(sorted(list(d.keys()))[1])) + '?'
+            s = opt_group(escape(sorted(list(d.keys()))[1])) + '?'
             # s = as_optional_group(d.keys())
         else:
             bysuff = suffixes(d)
@@ -385,7 +390,7 @@ def as_opt_charclass(l):
     if len(l) > 2:
         s = '[' + s + ']'
     else:
-        s = re.escape(s)
+        s = escape(s)
     s += '?'
     return s
 
