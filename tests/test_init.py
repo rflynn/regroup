@@ -1,7 +1,6 @@
 
 import re
 import unittest
-# from unittest import skip
 
 from regroup import match, DAWG
 
@@ -54,6 +53,11 @@ class TestParens(unittest.TestCase):
 
     def test_optional_space(self):
         self.assertEqual('a( b)?', match(['a', 'a b']))
+
+    def test_optional_group_complex(self):
+        # joe(s(eph)?|y?)  # technically accurate, as "y" is optional
+        # joe(s(eph)?|y)?  # ...better, i think
+        self.assertEqual('joe(s(eph)?|y?)', match(['joe', 'joey', 'joes', 'joeseph']))
 
 """
 class TestDAWG(unittest.TestCase):
