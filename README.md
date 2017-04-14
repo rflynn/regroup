@@ -9,6 +9,13 @@ My answer is `regroup.py`, a program that converts its input to a regular expres
 
 ![Travis CI Build Status](https://travis-ci.org/rflynn/regroup.png)
 
+## Install Me
+
+    git clone https://github.com/rflynn/regroup.git
+    cd regroup
+    make test
+    echo -e 'Mississippi\nMissouri' | ./regroup.py
+
 
 ## Examples
 
@@ -21,18 +28,18 @@ Missouri
 Miss(issipp|our)i
 ```
 
-```sh
-# convert a 2MB dictionary to a 1MB regex
-$ ./regroup.py < /usr/share/dict/words | wc -c
- 1278208
-```
-
 ```py
 # use regroup python lib directly
 # serialize 0-100 as a regex
 >>> import regroup
 >>> regroup.DAWG.from_iter(map(str, range(101))).serialize()
 '(0|1(00?|[1-9]?)|[2-9][0-9]?)'
+```
+
+```sh
+# convert a 2MB dictionary to a 1MB regex
+$ ./regroup.py < /usr/share/dict/words | wc -c
+ 1278208
 ```
 
 
