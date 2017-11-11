@@ -1,7 +1,7 @@
 # vim: set ts=8 noet:
 
 test: venv/bin/nosetests
-	venv/bin/nosetests --nocapture tests/
+	./venv/bin/python setup.py --quiet test
 
 venv/bin/nosetests: venv
 

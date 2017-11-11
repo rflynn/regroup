@@ -11,10 +11,14 @@ My answer is `regroup.py`, a program that converts its input to a regular expres
 
 ## Install Me
 
+    # check out, test and run the code...
     git clone https://github.com/rflynn/regroup.git
     cd regroup
     make test
     echo -e 'Mississippi\nMissouri' | ./regroup.py
+
+    # to install to your base system, run
+    python3 setup.py install
 
 
 ## Examples
