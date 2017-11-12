@@ -35,13 +35,15 @@ class TestParens(unittest.TestCase):
         strings = ['Black', 'Blue', 'Green', 'Red']
         self.assertEqual('(Bl(ack|ue)|Green|Red)', match(strings))
 
+    @unittest.expectedFailure
     def test_bat_brat_cat(self):
         strings = ['bat', 'brat', 'cat']
-        # NOTE: our crappy DAWG doesn't merge suffixes for strings that don't start the same...
+        # FIXME: our crappy DAWG doesn't merge suffixes for strings that don't start the same...
         # dawg = DAWG.from_iter(strings)
         # print(dawg)
-        # self.assertEqual('(br?|c)at', match(strings))
-        self.assertEqual('(br?at|cat)', match(strings))
+        self.assertEqual('(br?|c)at', match(strings))
+        # current result:
+        # self.assertEqual('(br?at|cat)', match(strings))
 
     def test_tap_taps_top_tops(self):
         strings = ['tap', 'taps', 'top', 'tops']
