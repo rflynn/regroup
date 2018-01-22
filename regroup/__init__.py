@@ -331,7 +331,7 @@ def as_optional_group(strings):
 
 
 def all_len01(l):
-    return set(map(len, l)) == {0, 1}
+    return set(map(len, l)) == set([0, 1])
 
 
 def is_optional_char_class(d):
@@ -506,7 +506,7 @@ class DAWGRelaxer:
 
     def do_relax(self, d):
         merged = reduce(dict_merge, d.values(), {})
-        d2 = {k: merged for k in d}
+        d2 = dict([(k, merged) for k in d])
         # print('merged', merged)
         # print('d2', d2)
         return DAWGRelaxer._replace(self.dawg.dawg, d, d2)
@@ -515,5 +515,4 @@ class DAWGRelaxer:
     def _replace(cls, dawg, find, replace):
         if dawg == find:
             return replace
-        return {k: cls._replace(v, find, replace)
-                for k, v in dawg.items()}
+        return dict([(k, cls._replace(v, find, replace)) for k, v in dawg.items()])
