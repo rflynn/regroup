@@ -14,7 +14,7 @@ def tokenize_regex_case_sensitive(string):
         yield token
 
 
-class Tokenizer:
+class Tokenizer(object):
 
     def __init__(self):
         pass
@@ -26,6 +26,7 @@ class Tokenizer:
 class DictionaryTokenizer(Tokenizer):
 
     def __init__(self, wordset=None):
+        Tokenizer.__init__(self)
         wordset = set(wordset) if wordset else set()
         self.wordset = wordset
         self.wordsetlen = defaultdict(set)
@@ -58,7 +59,7 @@ class DictionaryTokenizer(Tokenizer):
         return string[0]
 
 
-class Tagged:
+class Tagged(object):
 
     def __init__(self, string, tag):
         self.string = string
@@ -68,7 +69,7 @@ class Tagged:
         return self.string
 
 
-class TaggingTokenizer:
+class TaggingTokenizer(object):
 
     def __init__(self, tags):
         self.tags = tags

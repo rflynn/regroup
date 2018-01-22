@@ -1,12 +1,17 @@
 
+import re
 
-class Cluster:
+class Cluster(object):
     def __init__(self):
         self.left = None
         self.dist = None
         self.right = None
+        
+        
     def __repr__(self):
         return '({} {} {})'.format(self.left, self.dist, self.right)
+    
+    
     def dump(self, indent=0):
         if isinstance(self.left, str):
             print(' ' * indent, self.left)
@@ -17,33 +22,49 @@ class Cluster:
             print(' ' * indent, self.right)
         else:
             self.right.dump(indent=indent+1)
+            
+            
     def __iter__(self):
         yield self
         if self.left:
-            yield from self.left
+            for item in self.left:
+                yield item
         if self.right:
-            yield from self.right
+            for item in self.right:
+                yield item
+            
+            
     def leaves(self):
         if isinstance(self.left, str):
             yield self.left
         else:
-            yield from self.left.leaves()
+            for item in self.left.leaves():
+                yield item
         if isinstance(self.right, str):
             yield self.right
         else:
-            yield from self.right.leaves()
+            for item in self.right.leaves():
+                yield item
+            
+            
     def distances(self):
         yield self.dist
         if isinstance(self.left, Cluster):
-            yield from self.left.distances()
+            for item in self.left.distances():
+                yield item
         if isinstance(self.right, Cluster):
-            yield from self.right.distances()
+            for item in self.right.distances():
+                yield item
+            
+            
     def clusters_by(self, dist):
         if self.dist <= dist:
             return list(self.leaves())
         else:
             return (self.left.clusters_by(dist),
                     self.right.clusters_by(dist))
+        
+        
     def add(self, clusters, grid, lefti, righti):
         self.left = clusters[lefti]
         self.right = clusters[righti]
@@ -77,6 +98,7 @@ def agglomerate(labels, grid):
 
 
 def strdist(x, y):
+    #TODO: function levenshtein never got imported or defined
     return levenshtein(x, y)
     
 
