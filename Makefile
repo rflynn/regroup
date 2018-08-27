@@ -1,9 +1,7 @@
 # vim: set ts=8 noet:
 
-test: venv/bin/nosetests
-	./venv/bin/python setup.py --quiet test
-
-venv/bin/nosetests: venv
+test: venv
+	./venv/bin/python -m unittest discover tests/
 
 venv: requirements.txt
 	test -d venv || virtualenv -p python3 venv
