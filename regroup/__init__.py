@@ -19,7 +19,7 @@ def match(strings):
     return DAWG.from_iter(strings).serialize()
 
 
-class StringSet:
+class StringSet(object):
 
     '''
     a set of strings
@@ -35,7 +35,7 @@ class StringSet:
         return iter(self.strings.keys())
 
 
-class TaggedString:
+class TaggedString(object):
 
     def __init__(self, string, tokenizer=None):
         tokenizer = tokenizer or Tokenizer()
@@ -51,7 +51,7 @@ def escape(s):
     return re.escape(s).replace(r'\ ', ' ')
 
 
-class Trie:
+class Trie(object):
 
     '''
     Trie
@@ -99,7 +99,7 @@ class Trie:
         return root
 
 
-class DAWG:
+class DAWG(object):
 
     '''
     Directed Acyclic Word Graph
@@ -109,6 +109,7 @@ class DAWG:
 
     def __init__(self, trie=None):
         self.dawg = DAWG._build(trie)
+        self.trie = trie
 
     @classmethod
     def from_iter(cls, strings):
@@ -167,7 +168,8 @@ class DAWG:
     def _flatten(cls, d, path):
         for k, v in sorted(d.items()):
             if k:
-                yield from cls._flatten(v, path + k)
+                for item in cls._flatten(v, path + k):
+                    yield item
             else:
                 yield path
 
@@ -193,18 +195,18 @@ class DAWG:
             else:
                 cls._cluster_by_prefixlen(length, clusters, v, path2)
 
-    def dawg_weights(d, l):
+    def dawg_weights(self, d, l):
         """given a DAWG and the original list, calculate weights at each branchpoint"""
         weights = defaultdict(int)
-        _dawg_weights(l, weights, d, [])
+        self._dawg_weights(l, weights, d, [])
         return dict(weights)
 
-    def _dawg_weights(l, weights, d, path):
+    def _dawg_weights(self, l, weights, d, path):
         for k, v in d.items():
             path2 = path + [k]
             path2str = ''.join(path)
             weights[tuple(path2)] += sum(1 for x in l if x.startswith(path2str))
-            _dawg_weights(l, weights, v, path2)
+            self._dawg_weights(l, weights, v, path2)
 
     def top_weights(weights, n):
         wsorted = sorted(weights.items(),
@@ -329,7 +331,7 @@ def as_optional_group(strings):
 
 
 def all_len01(l):
-    return set(map(len, l)) == {0, 1}
+    return set(map(len, l)) == set([0, 1])
 
 
 def is_optional_char_class(d):
@@ -484,7 +486,8 @@ class DAWGRelaxer:
             yield (diffcnt, d)
         for k, v in d.items():
             if len(v) > 1:
-                yield from cls._relaxable(v)
+                for item in cls._relaxable(v):
+                    yield item
 
     def relax(self, threshold=1):
         '''
@@ -503,7 +506,7 @@ class DAWGRelaxer:
 
     def do_relax(self, d):
         merged = reduce(dict_merge, d.values(), {})
-        d2 = {k: merged for k in d}
+        d2 = dict([(k, merged) for k in d])
         # print('merged', merged)
         # print('d2', d2)
         return DAWGRelaxer._replace(self.dawg.dawg, d, d2)
@@ -512,5 +515,4 @@ class DAWGRelaxer:
     def _replace(cls, dawg, find, replace):
         if dawg == find:
             return replace
-        return {k: cls._replace(v, find, replace)
-                for k, v in dawg.items()}
+        return dict([(k, cls._replace(v, find, replace)) for k, v in dawg.items()])
